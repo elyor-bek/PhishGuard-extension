@@ -76,4 +76,6 @@ def predict():
     return jsonify({'url': url, 'score': round(score, 3), 'verdict': verdict})
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
