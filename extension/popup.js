@@ -21,7 +21,7 @@ document.getElementById('check-btn').addEventListener('click', async () => {
   document.getElementById('result').className = '';
 
   try {
-    const response = await fetch('http://localhost:5000/predict', {
+    const response = await fetch('https://phishguard-extension-production.up.railway.app/predict', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url })
