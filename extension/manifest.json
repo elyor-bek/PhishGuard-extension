@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "PhishGuard",
+  "version": "1.0",
+  "description": "Phishing detector",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "permissions": ["activeTab", "tabs"],
+  "host_permissions": ["http://localhost:5000/*", "<all_urls>"]
+}
