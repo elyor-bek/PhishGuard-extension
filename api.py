@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pickle
 import re
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 CORS(app)
@@ -18,13 +19,15 @@ SAFE_DOMAINS = {
 
 def get_domain(url):
     try:
-        parts = url.split('/')[2].split('.')
+        netloc = urlparse(url).netloc
+        parts = netloc.split('.')
         return '.'.join(parts[-2:])
     except:
         return ''
+
 def extract_features(url):
     try:
-        domain_part = url.split('/')[2]
+        domain_part = urlparse(url).netloc
     except:
         domain_part = url
 
@@ -46,6 +49,7 @@ def extract_features(url):
         int('?' in url),
         int(bool(re.search(r'\.(tk|ml|ga|cf|gq|xyz|win|top|click|loan|work|party|racing)$', domain_part.lower()))),
     ]]
+
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()
@@ -54,13 +58,17 @@ def predict():
     if not url:
         return jsonify({'error': 'URL не указан'}), 400
 
-    # Whitelist — сразу безопасно
+    # Сначала проверяем chrome:// и about:
+    if url.startswith('chrome://') or url.startswith('chrome-extension://') or url.startswith('about:'):
+        return jsonify({'url': url, 'score': 0.0, 'verdict': 'safe'})
+
+    # Whitelist
     domain = get_domain(url)
     if domain in SAFE_DOMAINS:
         return jsonify({'url': url, 'score': 0.0, 'verdict': 'safe'})
 
     features = extract_features(url)
-    score = model.predict_proba(features)[0][1]
+    score = float(model.predict_proba(features)[0][1])  # [0][1] = вероятность класса 1 (фишинг)
 
     if score > 0.7:
         verdict = 'phishing'
@@ -68,10 +76,6 @@ def predict():
         verdict = 'suspicious'
     else:
         verdict = 'safe'
-
-    if url.startswith('chrome://') or url.startswith('chrome-extension://') or url.startswith('about:'):
-        return jsonify({'url': url, 'score': 0.0, 'verdict': 'safe'})
-
 
     return jsonify({'url': url, 'score': round(score, 3), 'verdict': verdict})
 
